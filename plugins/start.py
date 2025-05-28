@@ -99,7 +99,12 @@ async def start_command(client: Client, message: Message):
 
         for msg in messages:
             original_caption = msg.caption.html if msg.caption else ""
-            caption = f"{original_caption}\n\n{CUSTOM_CAPTION}" if CUSTOM_CAPTION else original_caption
+            if msg.document:
+                # If it's a document, use the file name as caption
+              caption = f"<code>{msg.document.file_name}</code>\n\n<b>• For more series join - @seriescc</b>"
+            else:
+                # Use original caption if no file name
+                caption = original_caption
             reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
 
             try:

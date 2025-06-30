@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 def parse_buttons_for_db(lines):
     """
-    Parses custom button text (as per new format) and returns serializable button dicts for DB.
+    Parses custom button text and returns serializable button dicts for DB.
     Supports:
     - urlbutton - Label : "https://link"
     - alertbutton - Label : Alert message
@@ -22,7 +22,11 @@ def parse_buttons_for_db(lines):
                     label, url = part.split(":", 1)
                     label = label.split("-", 1)[1].strip()
                     url = url.strip().strip('"').strip("'")
-                    row_buttons.append({"type": "url", "text": label, "url": url})
+                    row_buttons.append({
+                        "type": "url",
+                        "text": label,
+                        "url": url
+                    })
                 except Exception:
                     continue
 
@@ -31,7 +35,11 @@ def parse_buttons_for_db(lines):
                     label, alert = part.split(":", 1)
                     label = label.split("-", 1)[1].strip()
                     alert = alert.strip()
-                    row_buttons.append({"type": "alert", "text": label, "alert": alert})
+                    row_buttons.append({
+                        "type": "alert",
+                        "text": label,
+                        "alert": alert
+                    })
                 except Exception:
                     continue
 
@@ -43,7 +51,10 @@ def parse_buttons_for_db(lines):
 
 def build_keyboard(button_data):
     """
-    Converts stored button dicts into InlineKeyboardMarkup.
+    Converts stored button dicts from DB into InlineKeyboardMarkup.
+    Supports:
+    - URL buttons
+    - Alert buttons (callback-based)
     """
     keyboard = []
 
@@ -51,9 +62,21 @@ def build_keyboard(button_data):
         buttons = []
         for btn in row:
             if btn.get("type") == "url":
-                buttons.append(InlineKeyboardButton(text=btn["text"], url=btn["url"]))
+                buttons.append(
+                    InlineKeyboardButton(
+                        text=btn["text"],
+                        url=btn["url"]
+                    )
+                )
             elif btn.get("type") == "alert":
-                buttons.append(InlineKeyboardButton(text=btn["text"], callback_data=f"alert:{btn['alert']}"))
+                # Ensure callback_data is within Telegram's 64-byte limit
+                alert_data = btn["alert"][:60]
+                buttons.append(
+                    InlineKeyboardButton(
+                        text=btn["text"],
+                        callback_data=f"alert:{alert_data}"
+                    )
+                )
         if buttons:
             keyboard.append(buttons)
 

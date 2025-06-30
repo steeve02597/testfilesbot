@@ -24,7 +24,7 @@ DB_NAME = os.environ.get("DATABASE_NAME", "Cluooo")
 
 # New variables (will add in Koyeb)
 LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", "0"))
-ADMIN_IDS = os.environ.get("ADMIN_IDS", "")  # Comma-separated string or single ID
+ADMIN_IDS = list(map(int, os.environ.get("ADMIN_IDS", "").split(","))) if os.environ.get("ADMIN_IDS") else []
 
 # =============== OTHER CONFIGS ===============
 

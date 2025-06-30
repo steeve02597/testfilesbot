@@ -1,12 +1,10 @@
-import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import ADMIN_IDS
 from utils.db import save_filter
-from utils.buttons import parse_buttons_for_db  # must match updated format
+from utils.buttons import parse_buttons_for_db
 
 
-# Check if user is admin
 def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
 
@@ -33,10 +31,21 @@ def register_gfilter(app: Client):
         reply = message.reply_to_message
 
         # Extract caption or text
-        caption = reply.caption or reply.text or ""
+        raw_text = reply.caption or reply.text or ""
+        lines = raw_text.strip().splitlines()
+
+        # Parse buttons from full text
+        buttons = parse_buttons_for_db(lines)
+
+        # Remove button lines from caption
+        content_lines = []
+        for line in lines:
+            if not any(x in line.lower() for x in ["urlbutton", "alertbutton"]):
+                content_lines.append(line)
+
+        caption = "\n".join(content_lines).strip()
         media = None
 
-        # Determine media type
         if reply.photo:
             media = "photo"
         elif reply.video:
@@ -52,30 +61,7 @@ def register_gfilter(app: Client):
         elif reply.audio:
             media = "audio"
 
-        # Ask admin for button data
-        await message.reply(
-            "✅ Almost done!\n\nIf you want to add buttons, send them now in this format:\n\n"
-            "`urlbutton - Watch : \"https://example.com\"`\n"
-            "`alertbutton - Info : This is an alert!`\n\n"
-            "Use `|` to place multiple buttons in the same row like:\n"
-            "`urlbutton - A : \"https://a.com\" | alertbutton - B : Alert!`\n\n"
-            "Send `skip` to skip adding buttons.",
-            quote=True
-        )
-
-        buttons = []
-
-        try:
-            response: Message = await app.listen(message.chat.id, timeout=60)
-            if response.text.lower() != "skip":
-                try:
-                    buttons = parse_buttons_for_db(response.text.strip().splitlines())
-                except Exception as e:
-                    return await message.reply_text(f"❗ Failed to parse buttons:\n`{e}`", quote=True)
-        except asyncio.TimeoutError:
-            await message.reply("⏰ Timeout. No buttons were saved.", quote=True)
-
-        # Save to MongoDB
+        # Save to DB
         await save_filter(
             keyword=keyword,
             caption=caption,

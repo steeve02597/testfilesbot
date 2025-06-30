@@ -2,13 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import ADMIN_IDS
 from utils.db import save_filter
-from utils.buttons import parse_buttons_for_db  # updated parser
-
-
-
-## this code is for saving gfilter from admin side
-
-
+from utils.buttons import parse_buttons_for_db  # must be working version
 
 def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
@@ -46,16 +40,16 @@ def register_gfilter(app: Client):
         elif reply.audio:
             media = "audio"
 
-        # Extract buttons safely and clean caption
+        # Check if admin sent a second message below /gfilter for buttons
         buttons = []
-        if caption and "||" in caption:
-            parts = caption.split("||", 1)
-            caption = parts[0].strip()
-            button_text_block = parts[1].strip()
-            button_lines = button_text_block.splitlines()
-            buttons = parse_buttons_for_db(button_lines)
+        async for msg in app.get_chat_history(message.chat.id, limit=2):
+            if msg.id == message.id:
+                continue  # skip the command message
+            if msg.text:
+                buttons = parse_buttons_for_db(msg.text.strip().splitlines())
+                break
 
-        # Save filter to DB
+        # Save to DB
         await save_filter(
             keyword=keyword,
             caption=caption,
@@ -64,4 +58,4 @@ def register_gfilter(app: Client):
             buttons=buttons
         )
 
-        await message.reply_text(f"✅ Global filter added for **{keyword}**.")
+        await message.reply_text(f"✅ Global filter saved for **{keyword}**.")

@@ -1,5 +1,4 @@
 import os
-from os import environ, getenv
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -13,7 +12,7 @@ from logging.handlers import RotatingFileHandler
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "8154426339")  # Old bot token (used as default)
 BOT_TOKEN = TG_BOT_TOKEN  # new style alias
 
-APP_ID = int(os.environ.get("APP_ID", ""))  # From my.telegram.org
+APP_ID = int(os.environ.get("APP_ID", "0"))  # From my.telegram.org
 API_ID = APP_ID  # alias for new format
 
 API_HASH = os.environ.get("API_HASH", "")  # From my.telegram.org
@@ -22,11 +21,13 @@ DATABASE_URL = DB_URI  # backwards compatible alias
 
 DB_NAME = os.environ.get("DATABASE_NAME", "Cluooo")
 
-# New variables (will add in Koyeb)
+# New variables (set in Koyeb)
 LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", "0"))
-ADMIN_IDS = list(map(int, os.environ.get("ADMIN_IDS", "").split(","))) if os.environ.get("ADMIN_IDS") else []
-print(f"[DEBUG] Loaded ADMIN_IDS: {ADMIN_IDS} (type: {type(ADMIN_IDS)})")
 
+try:
+    ADMIN_IDS = [int(x) for x in os.environ.get("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
+except Exception:
+    ADMIN_IDS = []
 
 # =============== OTHER CONFIGS ===============
 
@@ -68,7 +69,7 @@ CMD_TXT = """<blockquote><b>» ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs:</b></blockqu
 
 CUSTOM_CAPTION = os.environ.get("CUSTOM_CAPTION", "<b>• ʙʏ @nova_flix</b>")
 PROTECT_CONTENT = True if os.environ.get("PROTECT_CONTENT", "False") == "True" else False
-DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", None) == 'True'
+DISABLE_CHANNEL_BUTTON = os.environ.get("DISABLE_CHANNEL_BUTTON", "").lower() == "true"
 
 BOT_STATS_TEXT = "<b>BOT UPTIME</b>\n{uptime}"
 USER_REPLY_TEXT = "ʙᴀᴋᴋᴀ ! ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴍʏ ꜱᴇɴᴘᴀɪ!!"

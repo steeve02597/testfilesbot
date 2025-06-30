@@ -1,11 +1,12 @@
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from config import ADMIN_IDS
 from utils.db import save_filter
-from utils.buttons import parse_buttons_for_db  # updated function as per new format
-from pyromod.listen import ListenerTimeout
+from utils.buttons import parse_buttons_for_db  # must match updated format
 
 
+# Check if user is admin
 def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
 
@@ -31,11 +32,11 @@ def register_gfilter(app: Client):
         keyword = message.command[1].lower().strip()
         reply = message.reply_to_message
 
-        # Extract text or caption
+        # Extract caption or text
         caption = reply.caption or reply.text or ""
         media = None
 
-        # Detect media type
+        # Determine media type
         if reply.photo:
             media = "photo"
         elif reply.video:
@@ -51,13 +52,13 @@ def register_gfilter(app: Client):
         elif reply.audio:
             media = "audio"
 
-        # Ask for button input
+        # Ask admin for button data
         await message.reply(
             "✅ Almost done!\n\nIf you want to add buttons, send them now in this format:\n\n"
             "`urlbutton - Watch : \"https://example.com\"`\n"
             "`alertbutton - Info : This is an alert!`\n\n"
             "Use `|` to place multiple buttons in the same row like:\n"
-            "`urlbutton - A : \"https://a.com\" | alertbutton - B : Alert`\n\n"
+            "`urlbutton - A : \"https://a.com\" | alertbutton - B : Alert!`\n\n"
             "Send `skip` to skip adding buttons.",
             quote=True
         )
@@ -71,10 +72,10 @@ def register_gfilter(app: Client):
                     buttons = parse_buttons_for_db(response.text.strip().splitlines())
                 except Exception as e:
                     return await message.reply_text(f"❗ Failed to parse buttons:\n`{e}`", quote=True)
-        except ListenerTimeout:
+        except asyncio.TimeoutError:
             await message.reply("⏰ Timeout. No buttons were saved.", quote=True)
 
-        # Save to DB
+        # Save to MongoDB
         await save_filter(
             keyword=keyword,
             caption=caption,
